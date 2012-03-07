@@ -21,5 +21,6 @@
         android:layout_below="@+id/textView1"
         android:text=""
         android:textAppearance="?android:attr/textAppearanceMedium" />
+    <Button android:id="@+id/button1" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Button" android:layout_below="@+id/tv_uuid" android:layout_alignParentLeft="true" android:layout_marginTop="16dp"></Button>
 
 </RelativeLayout>
