@@ -43,6 +43,8 @@ public class BluetoothHost extends Activity {
 		initBluetooth();
 		setDiscoverable();
 		listenClient();
+		
+		Log.e("Jason", mBluetoothAdapter.getAddress());
 	}
 
 	private void bindViews() {
@@ -93,8 +95,12 @@ public class BluetoothHost extends Activity {
 	        // Keep listening until exception occurs or a socket is returned
 	        while (true) {
 	            try {
+	            	Log.e("Jason", "before");
 	                socket = mmServerSocket.accept();
+	                Log.e("Jason", "after");
+	                
 	            } catch (IOException e) {
+	            	Log.e("Jason", "IOException");
 	                break;
 	            }
 	            // If a connection was accepted
@@ -102,13 +108,17 @@ public class BluetoothHost extends Activity {
 	                // Do work to manage the connection (in a separate thread)
 	            	
 	                //manageConnectedSocket(socket);
-	                try {
+	            	Message m = new Message();
+	    	        m.what = 1;
+	    	        mHandler.sendMessage(m);
+	    	        
+					try {
 						mmServerSocket.close();
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();
 					}
-	                break;
+	    	        break;
 	            }
 	        }
 	    }

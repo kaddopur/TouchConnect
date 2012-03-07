@@ -1,25 +1,84 @@
 package ntu.mhci.touchconnect;
 
 import java.io.IOException;
+import java.util.Set;
 import java.util.UUID;
 
 import android.app.Activity;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothSocket;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Message;
+import android.util.Log;
 import android.widget.Toast;
 
 public class BluetoothClient extends Activity {
 	private BluetoothAdapter mBluetoothAdapter;
+	private final String mMAC = "AA:B0:12:40:00:74"; // host: Jason's desire S
+	private final UUID mUUID = UUID.fromString("d4925895-0722-4252-a969-03be18b8ffba");
+	private BluetoothDevice hostDevice;
+	
+	Handler mHandler = new Handler(){
+		@Override
+		public void handleMessage(Message msg) {
+			super.handleMessage(msg);
+			switch(msg.what){
+			case 1:
+				Toast.makeText(BluetoothClient.this, "connect ok", Toast.LENGTH_SHORT).show();
+				break;
+			case 2:
+				connectToHost();
+				break;
+			}
+		}
+	};
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.client);
 		
+		// Register the BroadcastReceiver
+		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
+		registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
+		
+		
+		Log.e("Jason", "ohohoh start");
 		initBluetooth();
-		//connectToHost();
+		findHost(); // initial hostDevice
+	}
+
+	private void connectToHost() {
+		
+		Log.e("Jason", ""+hostDevice);
+		Thread t = new ConnectThread(hostDevice);
+		t.start();
+	}
+
+	private void findHost() {
+		// in paired list
+		Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
+		if (pairedDevices.size() > 0) {
+		    // Loop through paired devices
+		    for (BluetoothDevice device : pairedDevices) {
+		    	if(device.getAddress().equals(mMAC)){
+		    		hostDevice = device;
+		    		connectToHost();
+		    		Log.e("Jason", "FOUND by pair");
+		    		return;
+		    	}
+		    	Log.e("Jason", "p "+device.getAddress());
+		    }
+		}
+		
+		// go slow scanning
+		mBluetoothAdapter.startDiscovery();
 	}
 
 	private void initBluetooth() {
@@ -42,7 +101,7 @@ public class BluetoothClient extends Activity {
 	        // Get a BluetoothSocket to connect with the given BluetoothDevice
 	        try {
 	            // MY_UUID is the app's UUID string, also used by the server code
-	            tmp = device.createRfcommSocketToServiceRecord(UUID.fromString("hey"));
+	            tmp = device.createRfcommSocketToServiceRecord(mUUID);
 	        } catch (IOException e) { }
 	        mmSocket = tmp;
 	    }
@@ -65,7 +124,9 @@ public class BluetoothClient extends Activity {
 	 
 	        // Do work to manage the connection (in a separate thread)
 	        //manageConnectedSocket(mmSocket);
-	        //Toast.makeText(this, "connect ok", Toast.LENGTH_SHORT).show();
+	        Message m = new Message();
+	        m.what = 1;
+	        mHandler.sendMessage(m);
 	    }
 	 
 	    /** Will cancel an in-progress connection, and close the socket */
@@ -75,4 +136,23 @@ public class BluetoothClient extends Activity {
 	        } catch (IOException e) { }
 	    }
 	}
+
+	// Create a BroadcastReceiver for ACTION_FOUND
+	private final BroadcastReceiver mReceiver = new BroadcastReceiver() {
+	    public void onReceive(Context context, Intent intent) {
+	        String action = intent.getAction();
+	        if (BluetoothDevice.ACTION_FOUND.equals(action)) {
+	            BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
+	            if(device.getAddress().equals(mMAC)){
+		    		hostDevice = device;
+		    		mBluetoothAdapter.cancelDiscovery();
+		    		Message m = new Message();
+			        m.what = 2;
+			        mHandler.sendMessage(m);
+		    		Log.e("Jason", "FOUND by scan");
+		    	}
+	            Log.e("Jason", "s "+device.getAddress());
+	        }
+	    }
+	};
 }
