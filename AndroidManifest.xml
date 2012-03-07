@@ -20,6 +20,8 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <activity android:name="BluetoothClient"></activity>
+        <activity android:name="BluetoothHost"></activity>
     </application>
 
 </manifest>

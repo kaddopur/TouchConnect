@@ -3,18 +3,32 @@
     android:layout_width="fill_parent"
     android:layout_height="fill_parent"
     android:orientation="vertical" >
-
-    <TextView
-        android:layout_width="fill_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/hello" />
-
-    <ListView
-        android:id="@+id/lv_paired"
+
+    <RelativeLayout
+        android:id="@+id/relativeLayout1"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="0.50" >
+        android:layout_height="match_parent" >
 
-    </ListView>
+        <LinearLayout
+            android:id="@+id/linearLayout2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerHorizontal="true"
+            android:layout_centerVertical="true" >
+
+            <Button
+                android:id="@+id/bt_host"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="@string/host_string" />
+
+            <Button
+                android:id="@+id/bt_client"
+                android:layout_width="100dp"
+                android:layout_height="wrap_content"
+                android:text="@string/client_string" />
+        </LinearLayout>
+
+    </RelativeLayout>
 
 </LinearLayout>

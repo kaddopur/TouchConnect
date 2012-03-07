@@ -3,5 +3,7 @@
 
     <string name="hello">Hello World, TouchConnectActivity!</string>
     <string name="app_name">TouchConnect</string>
+    <string name="host_string">Host</string>
+    <string name="client_string">Client</string>
 
 </resources>
