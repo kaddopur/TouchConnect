@@ -1,6 +1,8 @@
 package ntu.mhci.touchconnect;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.Set;
 import java.util.UUID;
 
@@ -16,6 +18,8 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
+import android.view.View;
+import android.widget.Button;
 import android.widget.Toast;
 
 public class BluetoothClient extends Activity {
@@ -23,6 +27,8 @@ public class BluetoothClient extends Activity {
 	private final String mMAC = "AA:B0:12:40:00:74"; // host: Jason's desire S
 	private final UUID mUUID = UUID.fromString("d4925895-0722-4252-a969-03be18b8ffba");
 	private BluetoothDevice hostDevice;
+	private Button bt_plus;
+	private BluetoothSocket client_socket;
 	
 	Handler mHandler = new Handler(){
 		@Override
@@ -44,6 +50,8 @@ public class BluetoothClient extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.client);
 		
+		bindViews();
+		
 		// Register the BroadcastReceiver
 		IntentFilter filter = new IntentFilter(BluetoothDevice.ACTION_FOUND);
 		registerReceiver(mReceiver, filter); // Don't forget to unregister during onDestroy
@@ -52,6 +60,22 @@ public class BluetoothClient extends Activity {
 		Log.e("Jason", "ohohoh start");
 		initBluetooth();
 		findHost(); // initial hostDevice
+	}
+
+	private void bindViews() {
+		bt_plus = (Button)findViewById(R.id.button1);
+		bt_plus.setOnClickListener(new Button.OnClickListener() {
+			
+			@Override
+			public void onClick(View v) {
+				try {
+					client_socket.getOutputStream().write("0".getBytes(), 0, 1);
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		});
 	}
 
 	private void connectToHost() {
@@ -124,6 +148,7 @@ public class BluetoothClient extends Activity {
 	 
 	        // Do work to manage the connection (in a separate thread)
 	        //manageConnectedSocket(mmSocket);
+	        client_socket = mmSocket;
 	        Message m = new Message();
 	        m.what = 1;
 	        mHandler.sendMessage(m);
@@ -146,13 +171,77 @@ public class BluetoothClient extends Activity {
 	            if(device.getAddress().equals(mMAC)){
 		    		hostDevice = device;
 		    		mBluetoothAdapter.cancelDiscovery();
+		    		
+		    		
+		    		
 		    		Message m = new Message();
 			        m.what = 2;
 			        mHandler.sendMessage(m);
+			        
+			        
+			        
 		    		Log.e("Jason", "FOUND by scan");
 		    	}
 	            Log.e("Jason", "s "+device.getAddress());
 	        }
 	    }
 	};
+	
+	private class ConnectedThread extends Thread {
+	    private final BluetoothSocket mmSocket;
+	    private final InputStream mmInStream;
+	    private final OutputStream mmOutStream;
+	 
+	    public ConnectedThread(BluetoothSocket socket) {
+	        mmSocket = socket;
+	        InputStream tmpIn = null;
+	        OutputStream tmpOut = null;
+	 
+	        // Get the input and output streams, using temp objects because
+	        // member streams are final
+	        try {
+	            tmpIn = socket.getInputStream();
+	            tmpOut = socket.getOutputStream();
+	        } catch (IOException e) { }
+	 
+	        mmInStream = tmpIn;
+	        mmOutStream = tmpOut;
+	    }
+	 
+	    public void run() {
+	        byte[] buffer = new byte[1024];  // buffer store for the stream
+	        int bytes; // bytes returned from read()
+	 
+	        // Keep listening to the InputStream until an exception occurs
+	        while (true) {
+	            try {
+	                // Read from the InputStream
+	                bytes = mmInStream.read(buffer, 0, buffer.length);
+	                // Send the obtained bytes to the UI activity
+	          
+	                Message m = new Message();
+	                m.what = 5;
+	                m.obj = new String(buffer).trim();
+	                mHandler.sendMessage(m);
+	                
+	            } catch (IOException e) {
+	                break;
+	            }
+	        }
+	    }
+	 
+	    /* Call this from the main activity to send data to the remote device */
+	    public void write(byte[] bytes) {
+	        try {
+	            mmOutStream.write(bytes);
+	        } catch (IOException e) { }
+	    }
+	 
+	    /* Call this from the main activity to shutdown the connection */
+	    public void cancel() {
+	        try {
+	            mmSocket.close();
+	        } catch (IOException e) { }
+	    }
+	}
 }
