@@ -83,7 +83,7 @@ public class BluetoothHost extends Activity {
 					client_value.set(i, ""+temp_value);
 					ada_clients.notifyDataSetChanged();
 					try {
-						client_socket.get(i).getOutputStream().write(("" + temp_value).getBytes());
+						client_socket.get(i).getOutputStream().write(("" + i).getBytes());
 					} catch (IOException e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

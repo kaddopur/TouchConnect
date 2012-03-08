@@ -20,6 +20,7 @@ import android.os.Message;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class BluetoothClient extends Activity {
@@ -28,7 +29,9 @@ public class BluetoothClient extends Activity {
 	private final UUID mUUID = UUID.fromString("d4925895-0722-4252-a969-03be18b8ffba");
 	private BluetoothDevice hostDevice;
 	private Button bt_plus;
-	private BluetoothSocket client_socket;
+	private ConnectedThread socket_thread;
+	private TextView tv_value;
+	private String index;
 	
 	Handler mHandler = new Handler(){
 		@Override
@@ -41,6 +44,10 @@ public class BluetoothClient extends Activity {
 			case 2:
 				connectToHost();
 				break;
+			case 5:
+				int temp = Integer.parseInt(tv_value.getText().toString()) + 1;
+				index = (String)msg.obj;
+				tv_value.setText(""+temp);
 			}
 		}
 	};
@@ -65,17 +72,16 @@ public class BluetoothClient extends Activity {
 	private void bindViews() {
 		bt_plus = (Button)findViewById(R.id.button1);
 		bt_plus.setOnClickListener(new Button.OnClickListener() {
-			
 			@Override
 			public void onClick(View v) {
-				try {
-					client_socket.getOutputStream().write("0".getBytes(), 0, 1);
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				socket_thread.write(index.getBytes());
+				int temp = Integer.parseInt(tv_value.getText().toString()) + 1;
+				tv_value.setText(""+temp);
 			}
 		});
+		
+		tv_value = (TextView)findViewById(R.id.tv_value);
+		tv_value.setText(""+0);
 	}
 
 	private void connectToHost() {
@@ -146,9 +152,9 @@ public class BluetoothClient extends Activity {
 	            return;
 	        }
 	 
-	        // Do work to manage the connection (in a separate thread)
-	        //manageConnectedSocket(mmSocket);
-	        client_socket = mmSocket;
+	        socket_thread = new ConnectedThread(mmSocket);
+	        socket_thread.start();
+	        
 	        Message m = new Message();
 	        m.what = 1;
 	        mHandler.sendMessage(m);
@@ -172,13 +178,9 @@ public class BluetoothClient extends Activity {
 		    		hostDevice = device;
 		    		mBluetoothAdapter.cancelDiscovery();
 		    		
-		    		
-		    		
 		    		Message m = new Message();
 			        m.what = 2;
 			        mHandler.sendMessage(m);
-			        
-			        
 			        
 		    		Log.e("Jason", "FOUND by scan");
 		    	}
